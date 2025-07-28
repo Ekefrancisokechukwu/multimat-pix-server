@@ -29,7 +29,7 @@ export const convertImageToFormats = async (
       const { size } = fs.statSync(outPath);
 
       results[format] = {
-        path: `${BASE_URL}/uploads/${filename}-converted.${format}`,
+        path: `/uploads/${filename}-converted.${format}`,
         sizeInBytes: size,
       };
     })

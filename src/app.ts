@@ -61,12 +61,24 @@ app.post("/upload", upload.single("image"), async (req, res) => {
       original: `/uploads/${req.file.filename}`,
       formats: transformedPaths,
     });
+
+    setTimeout(async () => {
+      try {
+        fs.unlinkSync(filePath);
+        const formats = Object.values(transformedPaths);
+        await Promise.all(
+          formats.map(async (urlPath) => {
+            const localPath = path.join(__dirname, `../${urlPath.path}`);
+            fs.unlinkSync(localPath);
+          })
+        );
+        console.log("🧹 Cleaned up uploaded files.");
+      } catch (err) {
+        console.error("❌ Cleanup failed:", err);
+      }
+    }, 6000);
   } catch (err) {
     console.error(err);
-
-    // if (err.code === "LIMIT_FILE_SIZE") {
-    //   return res.status(413).json({ error: "File size exceeds 10MB limit." });
-    // }
 
     res.status(500).json({ error: "Failed to process image." });
   }

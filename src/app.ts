@@ -76,12 +76,24 @@ app.post("/upload", upload.single("image"), async (req, res) => {
       } catch (err) {
         console.error("❌ Cleanup failed:", err);
       }
-    }, 6000);
+    }, 60000);
   } catch (err) {
     console.error(err);
 
     res.status(500).json({ error: "Failed to process image." });
   }
+});
+
+app.get("/download/:filename", (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, "../uploads", filename);
+
+  res.download(filePath, filename, (err) => {
+    if (err) {
+      console.error("Download error:", err);
+      res.status(404).send("File not found");
+    }
+  });
 });
 
 app.get("/", (req: Request, res: Response) => {

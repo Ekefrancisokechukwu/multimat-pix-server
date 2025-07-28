@@ -10,8 +10,6 @@ type File = {
   sizeInBytes: number;
 };
 
-const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
-
 export const convertImageToFormats = async (
   inputPath: string,
   filename: string

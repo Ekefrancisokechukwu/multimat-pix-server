@@ -10,7 +10,17 @@ import { convertImageToFormats } from "./utils/sharpTransform";
 
 const app: Express = express();
 
-app.use(cors());
+import rateLimit from "express-rate-limit";
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: "Too many uploads from this IP, please try again after an hour.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(cors({ origin: "https://multi-mat-pix.vercel.app" }));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,41 +58,46 @@ app.use(
   }
 );
 
-app.post("/upload", upload.single("image"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No image uploaded." });
+app.post(
+  "/upload",
+  uploadLimiter as unknown as express.RequestHandler,
+  upload.single("image"),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No image uploaded." });
 
-  try {
-    const filePath = req.file.path;
-    const baseName = path.parse(req.file.filename).name;
+    try {
+      const filePath = req.file.path;
+      const baseName = path.parse(req.file.filename).name;
 
-    const transformedPaths = await convertImageToFormats(filePath, baseName);
+      const transformedPaths = await convertImageToFormats(filePath, baseName);
 
-    res.json({
-      original: `/uploads/${req.file.filename}`,
-      formats: transformedPaths,
-    });
+      res.json({
+        original: `/uploads/${req.file.filename}`,
+        formats: transformedPaths,
+      });
 
-    setTimeout(async () => {
-      try {
-        fs.unlinkSync(filePath);
-        const formats = Object.values(transformedPaths);
-        await Promise.all(
-          formats.map(async (urlPath) => {
-            const localPath = path.join(__dirname, `../${urlPath.path}`);
-            fs.unlinkSync(localPath);
-          })
-        );
-        console.log("🧹 Cleaned up uploaded files.");
-      } catch (err) {
-        console.error("❌ Cleanup failed:", err);
-      }
-    }, 60 * 60 * 1000);
-  } catch (err) {
-    console.error(err);
+      setTimeout(async () => {
+        try {
+          fs.unlinkSync(filePath);
+          const formats = Object.values(transformedPaths);
+          await Promise.all(
+            formats.map(async (urlPath) => {
+              const localPath = path.join(__dirname, `../${urlPath.path}`);
+              fs.unlinkSync(localPath);
+            })
+          );
+          console.log("🧹 Cleaned up uploaded files.");
+        } catch (err) {
+          console.error("❌ Cleanup failed:", err);
+        }
+      }, 60 * 60 * 1000);
+    } catch (err) {
+      console.error(err);
 
-    res.status(500).json({ error: "Failed to process image." });
+      res.status(500).json({ error: "Failed to process image." });
+    }
   }
-});
+);
 
 app.get("/download/:filename", (req, res) => {
   const { filename } = req.params;

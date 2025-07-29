@@ -20,7 +20,8 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(cors({ origin: "https://multi-mat-pix.vercel.app" }));
+// app.use(cors({ origin: "https://multi-mat-pix.vercel.app" }));
+app.use(cors());
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

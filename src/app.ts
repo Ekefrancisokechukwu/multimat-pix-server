@@ -20,8 +20,22 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// app.use(cors({ origin: "https://multi-mat-pix.vercel.app" }));
-app.use(cors());
+const allowedOrigins = [
+  "https://multi-mat-pix.vercel.app",
+  "http://localhost:5173/",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+  })
+);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

@@ -12,17 +12,9 @@ const app: Express = express();
 
 import rateLimit from "express-rate-limit";
 
-const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
-  message: "Too many uploads from this IP, please try again after an hour.",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const allowedOrigins = [
   "https://multi-mat-pix.vercel.app",
-  "http://localhost:5173/",
+  "http://localhost:5173",
 ];
 
 app.use(
@@ -34,8 +26,18 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
   })
 );
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: "Too many uploads from this IP, please try again after an hour.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

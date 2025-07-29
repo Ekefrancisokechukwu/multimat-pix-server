@@ -76,7 +76,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
       } catch (err) {
         console.error("❌ Cleanup failed:", err);
       }
-    }, 60000);
+    }, 60 * 60 * 1000);
   } catch (err) {
     console.error(err);
 
